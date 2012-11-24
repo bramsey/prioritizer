@@ -62,10 +62,6 @@ Ranker.prototype.displayNext = function() {
         $('#unranked').hide();
         $('#ranked h3').html('Ranking done!');
     } else {
-        if (this.greaterThan(this.comparisons.slice(0), this.items[this.current], this.items[this.highest])) {
-            this.highest = this.current;
-        }
-
         $('#ranked_area').append(this.items[this.highest] + '\n');
         this.ranked.push(this.items[this.highest]);
         this.items.splice(this.highest, 1);
@@ -75,7 +71,6 @@ Ranker.prototype.displayNext = function() {
         $('#unranked_area').val(this.items.join('\n'));
         this.displayNext();
     }
-    
 }
 
 Ranker.prototype.compare = function(iHighest, iLowest) {
