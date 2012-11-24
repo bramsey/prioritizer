@@ -22,7 +22,7 @@ function Ranker(items) {
     this.ranked = [];
     this.comparisons = [];
     this.highest = 0;
-    this.current = 1;
+    this.current = 0;
     this.length = items.length;
     $('#ranker').show();
 }
@@ -116,26 +116,17 @@ $(document).ready(function() {
 
     // prioritize button
     $('#rank_action').bind('click', function(e) {
-        // TODO: add validations
-
         var items = $('#unranked_area').attr('value').replace( /^\s+|\s+$/g, "").split('\n');
 
         if (items[0] === '') {
+            // should use a flash notice instead.
             alert('please enter some items');
             return false;
-        } else if (items.length === 1) {
-            $('#ranked_area').append(items[0] + '\n');
-            items.splice(0, 1);
-            $('#unranked_area').val(items.join('\n'));
-            $('#ranker').hide();
-            $('#unranked').hide();
-            $('#ranked h3').html('Ranking done!');
-
-        } else {
-            ranker = new Ranker(items);
-            $('#item_a').html(ranker.items[ranker.highest]);
-            $('#item_b').html(ranker.items[ranker.current]);
         }
+
+        ranker = new Ranker(items);
+        ranker.displayNext();
+
         $('#unranked h3').html('Unranked');
         $('#ranked').show();
         $('#rank_action').hide();
