@@ -40,8 +40,19 @@ Ranker.prototype.greaterThan = function(comps, curr, target) {
     return found;
 };
 
+Ranker.prototype.rank = function(index) {
+    if (this.length <= 0) return;
+
+    $('#ranked_area').append(this.items[index] + '\n');
+    this.ranked.push(this.items[index]);
+    this.items.splice(index, 1);
+    this.highest = 0;
+    this.current = 0;
+    this.length = this.items.length;
+    $('#unranked_area').val(this.items.join('\n'));
+}
+
 Ranker.prototype.displayNext = function() {
-    var comp;
     if (this.current + 1 < this.length) {
         this.current += 1;
         if (this.greaterThan(this.comparisons.slice(0), this.items[this.highest], this.items[this.current])) {
@@ -53,22 +64,13 @@ Ranker.prototype.displayNext = function() {
             $('#item_a').html(this.items[this.highest]);
             $('#item_b').html(this.items[this.current]);
         }
-    } else if(this.length === 1) {
-        // done
-        $('#ranked_area').append(this.items[0] + '\n');
-        this.items = this.items.splice(0, 0);
-        $('#unranked_area').val(this.items.join('\n'));
+    } else if (this.length <= 1) {
+        this.rank(0);
         $('#ranker').hide();
         $('#unranked').hide();
         $('#ranked h3').html('Ranking done!');
     } else {
-        $('#ranked_area').append(this.items[this.highest] + '\n');
-        this.ranked.push(this.items[this.highest]);
-        this.items.splice(this.highest, 1);
-        this.highest = 0;
-        this.current = 0;
-        this.length = this.items.length;
-        $('#unranked_area').val(this.items.join('\n'));
+        this.rank(this.highest);
         this.displayNext();
     }
 }
