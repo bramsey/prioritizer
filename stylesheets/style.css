@@ -74,6 +74,7 @@ quiet { font-size: .75em; color: #777;}
 
 #ranker {
   display: none;
+  margin-bottom: 1em;
 }
 
 .item {}
