@@ -46,7 +46,7 @@ Ranker.prototype.rank = function(index) {
     this.current = 0;
     this.length = this.items.length;
     $('#unranked_area').val(this.items.join('\n'));
-}
+};
 
 Ranker.prototype.displayNext = function() {
     if (this.current + 1 < this.length) {
@@ -69,7 +69,7 @@ Ranker.prototype.displayNext = function() {
         this.rank(this.highest);
         this.displayNext();
     }
-}
+};
 
 Ranker.prototype.compare = function(iHighest, iLowest) {
     var comp = new Comparison(this.items[iHighest], this.items[iLowest]); 
@@ -78,7 +78,7 @@ Ranker.prototype.compare = function(iHighest, iLowest) {
         this.highest = iHighest;
     }
     this.displayNext();   
-}
+};
 
 
 $(document).ready(function() {
