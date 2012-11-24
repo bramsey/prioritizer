@@ -12,14 +12,9 @@ var A_KEY = 65,
     UNDO_KEY = 85,
     ranker;
 
-function Comparison(a, b, selection) {
-    this.a = a;
-    this.b = b;
-    this.result = selection;
-}
-
-Comparison.prototype.includes = function(item) {
-    return this.a === item || this.b === item;
+function Comparison(g, l) {
+    this.greater = g;
+    this.lesser = l;
 }
 
 function Ranker(items) {
@@ -32,21 +27,30 @@ function Ranker(items) {
     $('#ranker').show();
 }
 
-Ranker.prototype.findComparison = function(a, b) {
-    for (var i=0, l=this.comparisons.length; i < l; i++) {
-        if (this.comparisons[i].includes(a) && this.comparisons[i].includes(b)) {
-            return this.comparisons[i];
-        }
+Ranker.prototype.greaterThan = function(comps, curr, target) {
+    var comp, found = false, edges = [], tempComp;
+
+    while (!found && (comp = comps.pop())) {
+        if (comp.greater === curr) {
+            if (comp.lesser === target) {
+                found = true;
+            } else {
+                found = found || this.greaterThan(comps.slice(0), comp.lesser, target);
+            }
+        } 
     }
-    return undefined;
-}
+
+    return found;
+};
 
 Ranker.prototype.displayNext = function() {
     var comp;
     if (this.current + 1 < this.length) {
         this.current += 1;
-        comp = ranker.findComparison(this.items[this.highest], this.items[this.current]);
-        if (comp) {
+        if (this.greaterThan(this.comparisons.slice(0), this.items[this.highest], this.items[this.current])) {
+            this.displayNext();
+        } else if (this.greaterThan(this.comparisons.slice(0), this.items[this.current], this.items[this.highest])) {
+            this.highest = this.current;
             this.displayNext();
         } else {
             $('#item_a').html(this.items[this.highest]);
@@ -58,12 +62,18 @@ Ranker.prototype.displayNext = function() {
         this.items = this.items.splice(0, 0);
         $('#unranked_area').val(this.items.join('\n'));
         $('#ranker').hide();
+        $('#unranked').hide();
+        $('#ranked h3').html('Ranking done!');
     } else {
+        if (this.greaterThan(this.comparisons.slice(0), this.items[this.current], this.items[this.highest])) {
+            this.highest = this.current;
+        }
+
         $('#ranked_area').append(this.items[this.highest] + '\n');
         this.ranked.push(this.items[this.highest]);
         this.items.splice(this.highest, 1);
         this.highest = 0;
-        this.current = 1;
+        this.current = 0;
         this.length = this.items.length;
         $('#unranked_area').val(this.items.join('\n'));
         this.displayNext();
@@ -71,11 +81,11 @@ Ranker.prototype.displayNext = function() {
     
 }
 
-Ranker.prototype.compare = function(indexA, indexB, selection) {
-    var comp = new Comparison(this.items[indexA], this.items[indexB], this.items[selection]); 
+Ranker.prototype.compare = function(iHighest, iLowest) {
+    var comp = new Comparison(this.items[iHighest], this.items[iLowest]); 
     this.comparisons.push(comp);
-    if (selection === indexB) {
-        this.highest = indexB;
+    if (iHighest !== this.highest) {
+        this.highest = iHighest;
     }
     this.displayNext();   
 }
@@ -100,11 +110,11 @@ $(document).ready(function() {
     });
 
     $('#a_action').bind('click', function(e) {
-        ranker.compare(ranker.highest, ranker.current, ranker.highest);
+        ranker.compare(ranker.highest, ranker.current);
     });
 
     $('#b_action').bind('click', function(e) {
-        ranker.compare(ranker.highest, ranker.current, ranker.current);
+        ranker.compare(ranker.current, ranker.highest);
     });
 
     // prioritize button
@@ -121,13 +131,16 @@ $(document).ready(function() {
             items.splice(0, 1);
             $('#unranked_area').val(items.join('\n'));
             $('#ranker').hide();
+            $('#unranked').hide();
+            $('#ranked h3').html('Ranking done!');
+
         } else {
             ranker = new Ranker(items);
             $('#item_a').html(ranker.items[ranker.highest]);
             $('#item_b').html(ranker.items[ranker.current]);
         }
+        $('#unranked h3').html('Unranked');
         $('#ranked').show();
         $('#rank_action').hide();
     });
 });
-

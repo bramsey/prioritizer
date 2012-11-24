@@ -63,9 +63,9 @@ quiet { font-size: .75em; color: #777;}
   width: 27em;
 }
 
-.pull {
-  margin-left: 76px;
-  clear: right;
+.push {
+  margin-right: 76px;
+  clear: left;
 }
 
 #ranked {
