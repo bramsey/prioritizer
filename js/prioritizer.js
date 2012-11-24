@@ -1,12 +1,3 @@
-var _ = {
-    includes: function(arr, e) {
-        for (var i=0, l = arr.length; i < l; i++) {
-            if (arr[i] === e) return true;
-        }
-        return false;
-    }
-}
-
 var A_KEY = 65,
     B_KEY = 66,
     UNDO_KEY = 85,
@@ -27,17 +18,22 @@ function Ranker(items) {
     $('#ranker').show();
 }
 
-Ranker.prototype.greaterThan = function(comps, curr, target) {
-    var comp, found = false, edges = [], tempComp;
+Ranker.prototype.greaterThan = function(a, b) {
+    var comparisons = this.comparisons.slice(0),
+        greaterSearch = function(comps, curr, target) {
+            var comp, found = false;
 
-    while (!found && (comp = comps.pop())) {
-        if (comp.greater === curr) {
-            found = comp.lesser === target ||
-                    this.greaterThan(comps.slice(0), comp.lesser, target);
-        } 
-    }
+            while (!found && (comp = comps.pop())) {
+                if (comp.greater === curr) {
+                    found = comp.lesser === target ||
+                            greaterSearch(comps.slice(0), comp.lesser, target);
+                } 
+            }
 
-    return found;
+            return found;
+        };
+
+    return greaterSearch(comparisons.slice(0), a, b);
 };
 
 Ranker.prototype.rank = function(index) {
@@ -55,9 +51,9 @@ Ranker.prototype.rank = function(index) {
 Ranker.prototype.displayNext = function() {
     if (this.current + 1 < this.length) {
         this.current += 1;
-        if (this.greaterThan(this.comparisons.slice(0), this.items[this.highest], this.items[this.current])) {
+        if (this.greaterThan(this.items[this.highest], this.items[this.current])) {
             this.displayNext();
-        } else if (this.greaterThan(this.comparisons.slice(0), this.items[this.current], this.items[this.highest])) {
+        } else if (this.greaterThan(this.items[this.current], this.items[this.highest])) {
             this.highest = this.current;
             this.displayNext();
         } else {
