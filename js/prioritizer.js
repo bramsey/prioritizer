@@ -32,11 +32,8 @@ Ranker.prototype.greaterThan = function(comps, curr, target) {
 
     while (!found && (comp = comps.pop())) {
         if (comp.greater === curr) {
-            if (comp.lesser === target) {
-                found = true;
-            } else {
-                found = found || this.greaterThan(comps.slice(0), comp.lesser, target);
-            }
+            found = comp.lesser === target ||
+                    this.greaterThan(comps.slice(0), comp.lesser, target);
         } 
     }
 
