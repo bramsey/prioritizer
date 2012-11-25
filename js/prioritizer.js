@@ -18,6 +18,11 @@ function Ranker(items) {
     $('#ranker').show();
 }
 
+Ranker.prototype.display = function(a, b) {
+    $('#item_a').html(a);
+    $('#item_b').html(b);
+}
+
 Ranker.prototype.greaterThan = function(a, b) {
     var comparisons = this.comparisons.slice(0),
         greaterSearch = function(comps, curr, target) {
@@ -57,8 +62,7 @@ Ranker.prototype.displayNext = function() {
             this.highest = this.current;
             this.displayNext();
         } else {
-            $('#item_a').html(this.items[this.highest]);
-            $('#item_b').html(this.items[this.current]);
+            this.display(this.items[this.highest], this.items[this.current])
         }
     } else if (this.length <= 1) {
         this.rank(0);
@@ -80,6 +84,22 @@ Ranker.prototype.compare = function(iHighest, iLowest) {
     this.displayNext();   
 };
 
+Ranker.prototype.undo = function() {
+    // TODO: reflect the comparison changes in the unranked/ranked areas.
+    var comp = this.comparisons.pop(),
+        prevComp = this.comparisons[this.comparisons.length-1];
+
+    // TODO: account for edge cases:
+    //  last comparison resulted in a ranking
+
+    if (prevComp === undefined) {
+        this.display(this.items[0], this.items[1]);
+    } else if (comp.greater === prevComp.greater) {
+        this.display(comp.greater, comp.lesser);
+    } else {
+        this.display(comp.lesser, comp.greater);
+    }
+};
 
 $(document).ready(function() {
     // shortcut listener
@@ -105,6 +125,10 @@ $(document).ready(function() {
 
     $('#b_action').bind('click', function(e) {
         ranker.compare(ranker.current, ranker.highest);
+    });
+    
+    $('#undo').bind('click', function(e) {
+        ranker.undo();
     });
 
     // prioritize button
