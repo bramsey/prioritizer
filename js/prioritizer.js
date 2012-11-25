@@ -21,6 +21,11 @@ function Ranker(items) {
 }
 
 Ranker.prototype.display = function() {
+    if (this.comparisons[0] === undefined) {
+        this.hideUndo();
+    } else if (this.comparisons[1] === undefined) {
+        this.showUndo();
+    }
     $('#item_a').html(this.items[this.highest]);
     $('#item_b').html(this.items[this.current]);
 };
@@ -28,6 +33,16 @@ Ranker.prototype.display = function() {
 Ranker.prototype.updateAreas = function() {
     $('#ranked_area').val(this.ranked.join('\n'));
     $('#unranked_area').val(this.items.join('\n'));
+};
+
+Ranker.prototype.showUndo = function() {
+    console.log('showing undo');
+    $('#undo').show();
+};
+
+Ranker.prototype.hideUndo = function() {
+    console.log('hiding undo');
+    $('#undo').hide();
 };
 
 Ranker.prototype.greaterThan = function(a, b) {
@@ -95,20 +110,16 @@ Ranker.prototype.compare = function(iHighest, iLowest) {
 
 Ranker.prototype.undo = function() {
     var comp = this.comparisons.pop(),
-        highest,
-        current,
-        highestIndex,
-        currentIndex,
         lastRanked = this.ranked[this.ranked.length-1];
 
     if (comp === undefined) return;
 
     if (comp.greaterIndex < comp.lesserIndex) {
-        highestIndex = comp.greaterIndex;
-        currentIndex = comp.lesserIndex;
+        this.highest = comp.greaterIndex;
+        this.current = comp.lesserIndex;
     } else {
-        highestIndex = comp.lesserIndex;
-        currentIndex = comp.greaterIndex;
+        this.highest = comp.lesserIndex;
+        this.current = comp.greaterIndex;
     }
 
     if (comp.greater === lastRanked) {
@@ -118,8 +129,6 @@ Ranker.prototype.undo = function() {
         this.updateAreas();
     }
 
-    this.highest = highestIndex;
-    this.current = currentIndex;
     this.display();
 };
 

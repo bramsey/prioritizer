@@ -77,4 +77,6 @@ quiet { font-size: .75em; color: #777;}
   margin-bottom: 1em;
 }
 
-.item {}
+#undo {
+  display: none;
+}
