@@ -23,7 +23,12 @@ function Ranker(items) {
 Ranker.prototype.display = function() {
     $('#item_a').html(this.items[this.highest]);
     $('#item_b').html(this.items[this.current]);
-}
+};
+
+Ranker.prototype.updateAreas = function() {
+    $('#ranked_area').val(this.ranked.join('\n'));
+    $('#unranked_area').val(this.items.join('\n'));
+};
 
 Ranker.prototype.greaterThan = function(a, b) {
     var comparisons = this.comparisons.slice(0),
@@ -52,8 +57,7 @@ Ranker.prototype.rank = function(index) {
     this.current = 1;
     this.length = this.items.length;
     
-    $('#ranked_area').val(this.ranked.join('\n'));
-    $('#unranked_area').val(this.items.join('\n'));
+    this.updateAreas();
 };
 
 Ranker.prototype.displayNext = function() {
@@ -111,8 +115,7 @@ Ranker.prototype.undo = function() {
         // undo ranking
         this.items.splice(comp.greaterIndex, 0, this.ranked.pop());
         this.length = this.items.length;
-        $('#ranked_area').val(this.ranked.join('\n'));
-        $('#unranked_area').val(this.items.join('\n'));
+        this.updateAreas();
     }
 
     this.highest = highestIndex;
