@@ -10,14 +10,13 @@ function Comparison(g, l, gIndex, lIndex) {
     this.lesserIndex = lIndex;
 }
 
-function Ranker(items) {
-    this.items = items;
+function Ranker() {
+    this.items = $('#unranked_area').attr('value').replace( /^\s+|\s+$/g, "").split('\n');
     this.ranked = [];
     this.comparisons = [];
     this.highest = 0;
     this.current = 1;
-    this.length = items.length;
-    $('#ranker').show();
+    this.length = this.items.length;
 }
 
 Ranker.prototype.display = function() {
@@ -28,6 +27,20 @@ Ranker.prototype.display = function() {
     }
     $('#item_a').html(this.items[this.highest]);
     $('#item_b').html(this.items[this.current]);
+};
+
+Ranker.prototype.start = function() {
+    $('#ranker').show();
+    $('#unranked h3').html('Unranked');
+    $('#ranked').show();
+    $('#rank_action').hide();
+    this.displayNext();
+};
+
+Ranker.prototype.finish = function() {
+    $('#ranker').hide();
+    $('#unranked').hide();
+    $('#ranked h3').html('Ranking done!');
 };
 
 Ranker.prototype.updateAreas = function() {
@@ -89,9 +102,7 @@ Ranker.prototype.displayNext = function() {
         }
     } else if (this.length <= 1) {
         this.rank(0);
-        $('#ranker').hide();
-        $('#unranked').hide();
-        $('#ranked h3').html('Ranking done!');
+        this.finish();
     } else {
         this.rank(this.highest);
         this.displayNext();
@@ -164,19 +175,13 @@ $(document).ready(function() {
 
     // prioritize button
     $('#rank_action').bind('click', function(e) {
-        var items = $('#unranked_area').attr('value').replace( /^\s+|\s+$/g, "").split('\n');
-
-        if (items[0] === '') {
+        if ($('#unranked_area').attr('value') === '') {
             // should use a flash notice instead.
             alert('please enter some items');
             return false;
         }
 
-        ranker = new Ranker(items);
-        ranker.displayNext();
-
-        $('#unranked h3').html('Unranked');
-        $('#ranked').show();
-        $('#rank_action').hide();
+        ranker = new Ranker();
+        ranker.start();
     });
 });
