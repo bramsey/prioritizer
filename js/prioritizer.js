@@ -3,9 +3,11 @@ var A_KEY = 65,
     UNDO_KEY = 85,
     ranker;
 
-function Comparison(g, l) {
+function Comparison(g, l, gIndex, lIndex) {
     this.greater = g;
     this.lesser = l;
+    this.greaterIndex = gIndex;
+    this.lesserIndex = lIndex;
 }
 
 function Ranker(items) {
@@ -13,14 +15,14 @@ function Ranker(items) {
     this.ranked = [];
     this.comparisons = [];
     this.highest = 0;
-    this.current = 0;
+    this.current = 1;
     this.length = items.length;
     $('#ranker').show();
 }
 
-Ranker.prototype.display = function(a, b) {
-    $('#item_a').html(a);
-    $('#item_b').html(b);
+Ranker.prototype.display = function() {
+    $('#item_a').html(this.items[this.highest]);
+    $('#item_b').html(this.items[this.current]);
 }
 
 Ranker.prototype.greaterThan = function(a, b) {
@@ -44,25 +46,27 @@ Ranker.prototype.greaterThan = function(a, b) {
 Ranker.prototype.rank = function(index) {
     if (this.length <= 0) return;
 
-    $('#ranked_area').append(this.items[index] + '\n');
     this.ranked.push(this.items[index]);
     this.items.splice(index, 1);
     this.highest = 0;
-    this.current = 0;
+    this.current = 1;
     this.length = this.items.length;
+    
+    $('#ranked_area').val(this.ranked.join('\n'));
     $('#unranked_area').val(this.items.join('\n'));
 };
 
 Ranker.prototype.displayNext = function() {
-    if (this.current + 1 < this.length) {
-        this.current += 1;
+    if (this.current < this.length) {
         if (this.greaterThan(this.items[this.highest], this.items[this.current])) {
+            this.current += 1;
             this.displayNext();
         } else if (this.greaterThan(this.items[this.current], this.items[this.highest])) {
             this.highest = this.current;
+            this.current += 1;
             this.displayNext();
         } else {
-            this.display(this.items[this.highest], this.items[this.current])
+            this.display()
         }
     } else if (this.length <= 1) {
         this.rank(0);
@@ -76,29 +80,44 @@ Ranker.prototype.displayNext = function() {
 };
 
 Ranker.prototype.compare = function(iHighest, iLowest) {
-    var comp = new Comparison(this.items[iHighest], this.items[iLowest]); 
+    var comp = new Comparison(this.items[iHighest], this.items[iLowest], iHighest, iLowest); 
     this.comparisons.push(comp);
     if (iHighest !== this.highest) {
         this.highest = iHighest;
     }
+    this.current += 1;
     this.displayNext();   
 };
 
 Ranker.prototype.undo = function() {
-    // TODO: reflect the comparison changes in the unranked/ranked areas.
     var comp = this.comparisons.pop(),
-        prevComp = this.comparisons[this.comparisons.length-1];
+        highest,
+        current,
+        highestIndex,
+        currentIndex,
+        lastRanked = this.ranked[this.ranked.length-1];
 
-    // TODO: account for edge cases:
-    //  last comparison resulted in a ranking
+    if (comp === undefined) return;
 
-    if (prevComp === undefined) {
-        this.display(this.items[0], this.items[1]);
-    } else if (comp.greater === prevComp.greater) {
-        this.display(comp.greater, comp.lesser);
+    if (comp.greaterIndex < comp.lesserIndex) {
+        highestIndex = comp.greaterIndex;
+        currentIndex = comp.lesserIndex;
     } else {
-        this.display(comp.lesser, comp.greater);
+        highestIndex = comp.lesserIndex;
+        currentIndex = comp.greaterIndex;
     }
+
+    if (comp.greater === lastRanked) {
+        // undo ranking
+        this.items.splice(comp.greaterIndex, 0, this.ranked.pop());
+        this.length = this.items.length;
+        $('#ranked_area').val(this.ranked.join('\n'));
+        $('#unranked_area').val(this.items.join('\n'));
+    }
+
+    this.highest = highestIndex;
+    this.current = currentIndex;
+    this.display();
 };
 
 $(document).ready(function() {
