@@ -1,6 +1,6 @@
 # Prioritizer
 
-This tool helps you efficiently prioritize a list of items.
+This tool helps you efficiently prioritize a list of items. It remembers all comparisons and uses logic to infer relationships between items you haven't directly compared, to save time and headache.
 
 ## How to use
 
