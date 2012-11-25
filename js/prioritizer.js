@@ -58,6 +58,16 @@ Ranker.prototype.hideUndo = function() {
     $('#undo').hide();
 };
 
+Ranker.prototype.findComparison = function(a, b) {
+    for (i=0, l=this.comparisons.length; i < l; i++) {
+        if (this.comparisons[i].greater === a && this.comparisons[i].lesser === b) {
+            return this.comparisons[i];
+        }
+    }
+
+    return undefined;
+};
+
 Ranker.prototype.greaterThan = function(a, b) {
     var comparisons = this.comparisons.slice(0),
         greaterSearch = function(comps, curr, target) {
@@ -91,12 +101,9 @@ Ranker.prototype.rank = function(index) {
 Ranker.prototype.displayNext = function() {
     if (this.current < this.length) {
         if (this.greaterThan(this.items[this.highest], this.items[this.current])) {
-            this.current += 1;
-            this.displayNext();
+            this.compare(this.highest, this.current);
         } else if (this.greaterThan(this.items[this.current], this.items[this.highest])) {
-            this.highest = this.current;
-            this.current += 1;
-            this.displayNext();
+            this.compare(this.current, this.highest);
         } else {
             this.display()
         }
@@ -110,11 +117,17 @@ Ranker.prototype.displayNext = function() {
 };
 
 Ranker.prototype.compare = function(iHighest, iLowest) {
-    var comp = new Comparison(this.items[iHighest], this.items[iLowest], iHighest, iLowest); 
-    this.comparisons.push(comp);
+    var comp = this.findComparison(this.items[iHighest], this.items[iLowest]);
+
+    if (comp === undefined) {
+        comp = new Comparison(this.items[iHighest], this.items[iLowest], iHighest, iLowest); 
+        this.comparisons.push(comp);
+    }
+    
     if (iHighest !== this.highest) {
         this.highest = iHighest;
     }
+    
     this.current += 1;
     this.displayNext();   
 };
