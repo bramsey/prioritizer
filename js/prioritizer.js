@@ -16,8 +16,8 @@ function Ranker() {
     this.items = $('#unranked_area').attr('value').replace( /^\s+|\s+$/g, "").split('\n');
     this.ranked = [];
     this.comparisons = [];
-    this.highest = 0;
-    this.current = 1;
+    this.highestIndex = 0;
+    this.currentIndex = 1;
     this.length = this.items.length;
 }
 
@@ -28,8 +28,8 @@ Ranker.prototype.display = function() {
     } else if (this.comparisons[1] === undefined) {
         this.showUndo();
     }
-    $('#item_a').html(this.items[this.highest]);
-    $('#item_b').html(this.items[this.current]);
+    $('#item_a').html(this.items[this.highestIndex]);
+    $('#item_b').html(this.items[this.currentIndex]);
 };
 
 Ranker.prototype.start = function() {
@@ -59,7 +59,7 @@ Ranker.prototype.hideUndo = function() {
     $('#undo').hide();
 };
 
-Ranker.prototype.greaterThan = function(a, b) {
+Ranker.prototype.greaterThan = function(aIndex, bIndex) {
     var comparisons = this.comparisons.slice(0),
         greaterSearch = function(comps, curr, target) {
             var comp, found = false;
@@ -74,7 +74,7 @@ Ranker.prototype.greaterThan = function(a, b) {
             return found;
         };
 
-    return greaterSearch(comparisons.slice(0), this.items[a], this.items[b]);
+    return greaterSearch(comparisons.slice(0), this.items[aIndex], this.items[bIndex]);
 };
 
 Ranker.prototype.rank = function(index) {
@@ -82,41 +82,41 @@ Ranker.prototype.rank = function(index) {
 
     this.ranked.push(this.items[index]);
     this.items.splice(index, 1);
-    this.highest = 0;
-    this.current = 1;
+    this.highestIndex = 0;
+    this.currentIndex = 1;
     this.length = this.items.length;
     
     this.updateAreas();
 };
 
 Ranker.prototype.displayNext = function() {
-    //console.log('current: ' + this.current + ', highest: ' + this.highest + ', length: ' + this.length);
+    //console.log('current: ' + this.currentIndex + ', highest: ' + this.highestIndex + ', length: ' + this.length);
     if (this.length < 1) {
         this.finish();
-    } else if (this.current < this.length) {
+    } else if (this.currentIndex < this.length) {
         // check if a comparison can be inferred
-        if (this.greaterThan(this.highest, this.current)) {
-            this.compare(this.highest, this.current);
-        } else if (this.greaterThan(this.current, this.highest)) {
-            this.compare(this.current, this.highest);
+        if (this.greaterThan(this.highestIndex, this.currentIndex)) {
+            this.compare(this.highestIndex, this.currentIndex);
+        } else if (this.greaterThan(this.currentIndex, this.highestIndex)) {
+            this.compare(this.currentIndex, this.highestIndex);
         } else {
             this.display()
         }
     } else {
-        this.rank(this.highest);
+        this.rank(this.highestIndex);
         this.displayNext();
     }
 };
 
-Ranker.prototype.compare = function(iHighest, iLowest, clicked) {
-    var comp = new Comparison(this.items[iHighest], this.items[iLowest], iHighest, iLowest, clicked); 
+Ranker.prototype.compare = function(hIndex, lIndex, clicked) {
+    var comp = new Comparison(this.items[hIndex], this.items[lIndex], hIndex, lIndex, clicked); 
     this.comparisons.push(comp);
     
-    if (iHighest !== this.highest) {
-        this.highest = iHighest;
+    if (hIndex !== this.highestIndex) {
+        this.highestIndex = hIndex;
     }
     
-    this.current += 1;
+    this.currentIndex += 1;
     this.displayNext();   
 };
 
@@ -127,11 +127,11 @@ Ranker.prototype.undo = function() {
         if (comp === undefined) break;
 
         if (comp.greaterIndex < comp.lesserIndex) {
-            this.highest = comp.greaterIndex;
-            this.current = comp.lesserIndex;
+            this.highestIndex = comp.greaterIndex;
+            this.currentIndex = comp.lesserIndex;
         } else {
-            this.highest = comp.lesserIndex;
-            this.current = comp.greaterIndex;
+            this.highestIndex = comp.lesserIndex;
+            this.currentIndex = comp.greaterIndex;
         }
         
         lastRanked = this.ranked[this.ranked.length-1];
@@ -168,11 +168,11 @@ $(document).ready(function() {
     });
 
     $('#a_action').bind('click', function(e) {
-        ranker.compare(ranker.highest, ranker.current, true);
+        ranker.compare(ranker.highestIndex, ranker.currentIndex, true);
     });
 
     $('#b_action').bind('click', function(e) {
-        ranker.compare(ranker.current, ranker.highest, true);
+        ranker.compare(ranker.currentIndex, ranker.highestIndex, true);
     });
     
     $('#undo').bind('click', function(e) {
