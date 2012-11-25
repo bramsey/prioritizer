@@ -3,14 +3,16 @@ var A_KEY = 65,
     UNDO_KEY = 85,
     ranker;
 
-function Comparison(g, l, gIndex, lIndex) {
+function Comparison(g, l, gIndex, lIndex, clicked) {
     this.greater = g;
     this.lesser = l;
     this.greaterIndex = gIndex;
     this.lesserIndex = lIndex;
+    this.clicked = clicked;
 }
 
 function Ranker() {
+    // TODO: decouple from jquery calls.
     this.items = $('#unranked_area').attr('value').replace( /^\s+|\s+$/g, "").split('\n');
     this.ranked = [];
     this.comparisons = [];
@@ -19,6 +21,7 @@ function Ranker() {
     this.length = this.items.length;
 }
 
+// TODO: create a new object to manage the presentation layer.
 Ranker.prototype.display = function() {
     if (this.comparisons[0] === undefined) {
         this.hideUndo();
@@ -49,12 +52,10 @@ Ranker.prototype.updateAreas = function() {
 };
 
 Ranker.prototype.showUndo = function() {
-    console.log('showing undo');
     $('#undo').show();
 };
 
 Ranker.prototype.hideUndo = function() {
-    console.log('hiding undo');
     $('#undo').hide();
 };
 
@@ -88,6 +89,7 @@ Ranker.prototype.greaterThan = function(a, b) {
 
 Ranker.prototype.rank = function(index) {
     if (this.length <= 0) return;
+    console.log('ranking');
 
     this.ranked.push(this.items[index]);
     this.items.splice(index, 1);
@@ -99,6 +101,7 @@ Ranker.prototype.rank = function(index) {
 };
 
 Ranker.prototype.displayNext = function() {
+    console.log('current: ' + this.current + ', highest: ' + this.highest + ', length: ' + this.length);
     if (this.current < this.length) {
         if (this.greaterThan(this.items[this.highest], this.items[this.current])) {
             this.compare(this.highest, this.current);
@@ -116,11 +119,11 @@ Ranker.prototype.displayNext = function() {
     }
 };
 
-Ranker.prototype.compare = function(iHighest, iLowest) {
-    var comp = this.findComparison(this.items[iHighest], this.items[iLowest]);
+Ranker.prototype.compare = function(iHighest, iLowest, clicked) {
+    var comp;
 
     if (comp === undefined) {
-        comp = new Comparison(this.items[iHighest], this.items[iLowest], iHighest, iLowest); 
+        comp = new Comparison(this.items[iHighest], this.items[iLowest], iHighest, iLowest, clicked); 
         this.comparisons.push(comp);
     }
     
@@ -133,24 +136,29 @@ Ranker.prototype.compare = function(iHighest, iLowest) {
 };
 
 Ranker.prototype.undo = function() {
-    var comp = this.comparisons.pop(),
+    var comp, found = false, lastRanked;
+
+    while (!found && (comp = this.comparisons.pop())) {
+        if (comp === undefined) break;
+
+        if (comp.greaterIndex < comp.lesserIndex) {
+            this.highest = comp.greaterIndex;
+            this.current = comp.lesserIndex;
+        } else {
+            this.highest = comp.lesserIndex;
+            this.current = comp.greaterIndex;
+        }
+        
         lastRanked = this.ranked[this.ranked.length-1];
 
-    if (comp === undefined) return;
+        if (comp.greater === lastRanked) {
+            // undo ranking
+            this.items.splice(comp.greaterIndex, 0, this.ranked.pop());
+            this.length = this.items.length;
+            this.updateAreas();
+        }
 
-    if (comp.greaterIndex < comp.lesserIndex) {
-        this.highest = comp.greaterIndex;
-        this.current = comp.lesserIndex;
-    } else {
-        this.highest = comp.lesserIndex;
-        this.current = comp.greaterIndex;
-    }
-
-    if (comp.greater === lastRanked) {
-        // undo ranking
-        this.items.splice(comp.greaterIndex, 0, this.ranked.pop());
-        this.length = this.items.length;
-        this.updateAreas();
+        found = comp.clicked;
     }
 
     this.display();
@@ -175,11 +183,11 @@ $(document).ready(function() {
     });
 
     $('#a_action').bind('click', function(e) {
-        ranker.compare(ranker.highest, ranker.current);
+        ranker.compare(ranker.highest, ranker.current, true);
     });
 
     $('#b_action').bind('click', function(e) {
-        ranker.compare(ranker.current, ranker.highest);
+        ranker.compare(ranker.current, ranker.highest, true);
     });
     
     $('#undo').bind('click', function(e) {
