@@ -59,22 +59,26 @@ Ranker.prototype.hideUndo = function() {
     $('#undo').hide();
 };
 
+Ranker.prototype.greaterSearch = function(comps, curr, target, i) {
+    var comp, found = false;
+
+    while (!found && i >= 0) {
+        comp = comps[i];
+        if (comp.greater === curr) {
+            found = comp.lesser === target ||
+                    this.greaterSearch(comps, comp.lesser, target, i);
+        } 
+        i--;
+    }
+
+    return found;
+};
+
 Ranker.prototype.greaterThan = function(aIndex, bIndex) {
-    var comparisons = this.comparisons.slice(0),
-        greaterSearch = function(comps, curr, target) {
-            var comp, found = false;
-
-            while (!found && (comp = comps.pop())) {
-                if (comp.greater === curr) {
-                    found = comp.lesser === target ||
-                            greaterSearch(comps.slice(0), comp.lesser, target);
-                } 
-            }
-
-            return found;
-        };
-
-    return greaterSearch(comparisons.slice(0), this.items[aIndex], this.items[bIndex]);
+    return this.greaterSearch(this.comparisons, 
+                              this.items[aIndex],
+                              this.items[bIndex],
+                              this.comparisons.length-1);
 };
 
 Ranker.prototype.rank = function(index) {
@@ -90,15 +94,14 @@ Ranker.prototype.rank = function(index) {
 };
 
 Ranker.prototype.displayNext = function() {
-    //console.log('current: ' + this.currentIndex + ', highest: ' + this.highestIndex + ', length: ' + this.length);
     if (this.length < 1) {
         this.finish();
     } else if (this.currentIndex < this.length) {
         // check if a comparison can be inferred
-        if (this.greaterThan(this.highestIndex, this.currentIndex)) {
-            this.compare(this.highestIndex, this.currentIndex);
-        } else if (this.greaterThan(this.currentIndex, this.highestIndex)) {
+        if (this.greaterThan(this.currentIndex, this.highestIndex)) {
             this.compare(this.currentIndex, this.highestIndex);
+        } else if (this.greaterThan(this.highestIndex, this.currentIndex)) {
+            this.compare(this.highestIndex, this.currentIndex);
         } else {
             this.display()
         }
@@ -109,6 +112,7 @@ Ranker.prototype.displayNext = function() {
 };
 
 Ranker.prototype.compare = function(hIndex, lIndex, clicked) {
+    //console.log(this.items[hIndex] + ' > ' + this.items[lIndex] + ' | ' + clicked);
     var comp = new Comparison(this.items[hIndex], this.items[lIndex], hIndex, lIndex, clicked); 
     this.comparisons.push(comp);
     
