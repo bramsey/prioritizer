@@ -1,8 +1,3 @@
-var A_KEY = 65,
-    B_KEY = 66,
-    UNDO_KEY = 85,
-    ranker;
-
 function Comparison(g, l, gIndex, lIndex, clicked) {
     this.greater = g;
     this.lesser = l;
@@ -15,7 +10,7 @@ function Ranker(jqObjects) {
     // assign jquery object properties.
     for (var prop in jqObjects) {
         if (jqObjects.hasOwnProperty(prop)) {
-            this[prop] = jqObjects[prop];
+            this[prop] = $(jqObjects[prop]);
         }
     }
 
@@ -43,7 +38,10 @@ Ranker.prototype.display = function() {
 };
 
 Ranker.prototype.bindListeners = function() {
-    var that = this;
+    var that = this,
+        A_KEY = 65,
+        B_KEY = 66,
+        UNDO_KEY = 85;
 
     // shortcut listener
     $(document).bind('keyup', function(e) {
@@ -210,19 +208,19 @@ Ranker.prototype.undo = function() {
 };
 
 $(document).ready(function() {
-    ranker = new Ranker({
-        '$unrankedArea': $('#unranked_area'),
-        '$rankedArea': $('#ranked_area'),
-        '$itemA': $('#item_a'),
-        '$itemB': $('#item_b'),
-        '$aAction': $('#a_action'),
-        '$bAction': $('#b_action'),
-        '$undo': $('#undo'),
-        '$ranker': $('#ranker'),
-        '$rankAction': $('#rank_action'),
-        '$unrankedTitle': $('#unranked h3'),
-        '$rankedDiv': $('#ranked'),
-        '$unrankedDiv': $('#unranked'),
-        '$rankedTitle': $('#ranked h3')
+    var ranker = new Ranker({
+        '$unrankedArea': '#unranked_area',
+        '$rankedArea': '#ranked_area',
+        '$itemA': '#item_a',
+        '$itemB': '#item_b',
+        '$aAction': '#a_action',
+        '$bAction': '#b_action',
+        '$undo': '#undo',
+        '$ranker': '#ranker',
+        '$rankAction': '#rank_action',
+        '$unrankedTitle': '#unranked h3',
+        '$rankedDiv': '#ranked',
+        '$unrankedDiv': '#unranked',
+        '$rankedTitle': '#ranked h3'
     });
 });
