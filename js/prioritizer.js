@@ -11,15 +11,25 @@ function Comparison(g, l, gIndex, lIndex, clicked) {
     this.clicked = clicked;
 }
 
-function Ranker() {
-    // TODO: decouple from jquery calls.
-    this.items = $('#unranked_area').attr('value').replace( /^\s+|\s+$/g, "").split('\n');
+function Ranker(jqObjects) {
+    // assign jquery object properties.
+    for (var prop in jqObjects) {
+        if (jqObjects.hasOwnProperty(prop)) {
+            this[prop] = jqObjects[prop];
+        }
+    }
+
+    this.bindListeners();
+}
+
+Ranker.prototype.init = function() {
+    this.items = this.$unrankedArea.attr('value').replace( /^\s+|\s+$/g, "").split('\n');
     this.ranked = [];
     this.comparisons = [];
     this.highestIndex = 0;
     this.currentIndex = 1;
     this.length = this.items.length;
-}
+};
 
 // TODO: create a new object to manage the presentation layer.
 Ranker.prototype.display = function() {
@@ -28,35 +38,82 @@ Ranker.prototype.display = function() {
     } else if (this.comparisons[1] === undefined) {
         this.showUndo();
     }
-    $('#item_a').html(this.items[this.highestIndex]);
-    $('#item_b').html(this.items[this.currentIndex]);
+    this.$itemA.html(this.items[this.highestIndex]);
+    this.$itemB.html(this.items[this.currentIndex]);
 };
 
-Ranker.prototype.start = function() {
-    $('#ranker').show();
-    $('#unranked h3').html('Unranked');
-    $('#ranked').show();
-    $('#rank_action').hide();
+Ranker.prototype.bindListeners = function() {
+    var that = this;
+
+    // shortcut listener
+    $(document).bind('keyup', function(e) {
+        if (that.$ranker.css('display') === 'none') return true;
+
+        switch(e.keyCode) {
+            case A_KEY:
+                that.$aAction.trigger('click');
+                break;
+            case B_KEY:
+                that.$bAction.trigger('click');
+                break;
+            case UNDO_KEY:
+                if(that.$undo.css('display') !== 'none') that.$undo.trigger('click');
+                break;
+        }
+    });
+
+    that.$aAction.bind('click', function(e) {
+        that.compare(that.highestIndex, that.currentIndex, true);
+    });
+
+    that.$bAction.bind('click', function(e) {
+        that.compare(that.currentIndex, that.highestIndex, true);
+    });
+
+    that.$undo.bind('click', function(e) {
+        that.undo();
+    });
+
+    // prioritize button
+    that.$rankAction.bind('click', function(e) {
+        if (that.$unrankedArea.attr('value') === '') {
+            // should use a flash notice instead.
+            alert('please enter some items');
+            return false;
+        }
+
+        that.init();
+        that.show();
+    });
+};
+
+Ranker.prototype.show = function() {
+
+    this.$ranker.show();
+    this.$unrankedTitle.html('Unranked');
+    this.$rankedDiv.show();
+    this.$rankAction.hide();
+
     this.displayNext();
 };
 
-Ranker.prototype.finish = function() {
-    $('#ranker').hide();
-    $('#unranked').hide();
-    $('#ranked h3').html('Ranking done!');
+Ranker.prototype.hide = function() {
+    this.$ranker.hide();
+    this.$unrankedDiv.hide();
+    this.$rankedTitle.html('Ranking done!');
 };
 
 Ranker.prototype.updateAreas = function() {
-    $('#ranked_area').val(this.ranked.join('\n'));
-    $('#unranked_area').val(this.items.join('\n'));
+    this.$rankedArea.val(this.ranked.join('\n'));
+    this.$unrankedArea.val(this.items.join('\n'));
 };
 
 Ranker.prototype.showUndo = function() {
-    $('#undo').show();
+    this.$undo.show();
 };
 
 Ranker.prototype.hideUndo = function() {
-    $('#undo').hide();
+    this.$undo.hide();
 };
 
 Ranker.prototype.greaterSearch = function(comps, curr, target, i) {
@@ -95,7 +152,7 @@ Ranker.prototype.rank = function(index) {
 
 Ranker.prototype.displayNext = function() {
     if (this.length < 1) {
-        this.finish();
+        this.hide();
     } else if (this.currentIndex < this.length) {
         // check if a comparison can be inferred
         if (this.greaterThan(this.currentIndex, this.highestIndex)) {
@@ -112,7 +169,6 @@ Ranker.prototype.displayNext = function() {
 };
 
 Ranker.prototype.compare = function(hIndex, lIndex, clicked) {
-    //console.log(this.items[hIndex] + ' > ' + this.items[lIndex] + ' | ' + clicked);
     var comp = new Comparison(this.items[hIndex], this.items[lIndex], hIndex, lIndex, clicked); 
     this.comparisons.push(comp);
     
@@ -154,44 +210,19 @@ Ranker.prototype.undo = function() {
 };
 
 $(document).ready(function() {
-    // shortcut listener
-    $(document).bind('keyup', function(e) {
-        if ($('#ranker').css('display') === 'none') return true;
-
-        switch(e.keyCode) {
-            case A_KEY:
-                $('#a_action').trigger('click');
-                break;
-            case B_KEY:
-                $('#b_action').trigger('click');
-                break;
-            case UNDO_KEY:
-                if($('#undo').css('display') !== 'none') $('#undo').trigger('click');
-                break;
-        }
-    });
-
-    $('#a_action').bind('click', function(e) {
-        ranker.compare(ranker.highestIndex, ranker.currentIndex, true);
-    });
-
-    $('#b_action').bind('click', function(e) {
-        ranker.compare(ranker.currentIndex, ranker.highestIndex, true);
-    });
-    
-    $('#undo').bind('click', function(e) {
-        ranker.undo();
-    });
-
-    // prioritize button
-    $('#rank_action').bind('click', function(e) {
-        if ($('#unranked_area').attr('value') === '') {
-            // should use a flash notice instead.
-            alert('please enter some items');
-            return false;
-        }
-
-        ranker = new Ranker();
-        ranker.start();
+    ranker = new Ranker({
+        '$unrankedArea': $('#unranked_area'),
+        '$rankedArea': $('#ranked_area'),
+        '$itemA': $('#item_a'),
+        '$itemB': $('#item_b'),
+        '$aAction': $('#a_action'),
+        '$bAction': $('#b_action'),
+        '$undo': $('#undo'),
+        '$ranker': $('#ranker'),
+        '$rankAction': $('#rank_action'),
+        '$unrankedTitle': $('#unranked h3'),
+        '$rankedDiv': $('#ranked'),
+        '$unrankedDiv': $('#unranked'),
+        '$rankedTitle': $('#ranked h3')
     });
 });
